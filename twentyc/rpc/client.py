@@ -6,13 +6,14 @@ import json
 import urllib
 import urlparse
 
-class NotFoundException(Exception):
+
+class NotFoundException(LookupError):
     pass
 
-class PermissionDeniedException(Exception):
+class PermissionDeniedException(IOError):
     pass
 
-class InvalidRequestException(Exception):
+class InvalidRequestException(ValueError):
 
     def __init__(self, msg, extra):
         Exception.__init__(self, msg)
@@ -32,7 +33,7 @@ class RestClient(object):
         self.user = None
         self.password = None
         self.timeout = None
-        self.validate_ssl = True 
+        self.validate_ssl = True
         self.verbose = False
         self.ssl = kwargs.get("ssl", True)
 
