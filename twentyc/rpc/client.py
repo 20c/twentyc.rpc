@@ -90,7 +90,7 @@ class RestClient(object):
                 raise NotFoundException(err)
             elif res.status == 401 or res.status == 403:
                 raise PermissionDeniedException(err)
-            else:
+            elif res.status == 400:
                 raise InvalidRequestException("%d %s" % (res.status, err), data)
 
         # Internal
