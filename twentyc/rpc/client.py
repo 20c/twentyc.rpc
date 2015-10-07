@@ -88,14 +88,14 @@ class RestClient(object):
         err = data.get('meta', {}).get('error', 'Unknown')
         if res.status < 600:
             if res.status == 404:
-                raise NotFoundException(err)
+                raise NotFoundException("%d %s" % (res.status, err))
             elif res.status == 401 or res.status == 403:
-                raise PermissionDeniedException(err)
+                raise PermissionDeniedException("%d %s" % (res.status, err))
             elif res.status == 400:
                 raise InvalidRequestException("%d %s" % (res.status, err), data)
 
         # Internal
-        raise Exception("Internal error %d %s" % (res.status, err))
+        raise Exception("%d Internal error: %s" % (res.status, err))
 
     def _load(self, res):
         try:
