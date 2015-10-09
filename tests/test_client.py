@@ -58,7 +58,7 @@ testData = {
     }
 }
 
-class TestResponse(object):
+class DummyResponse(object):
     def __init__(self, status, content, headers={}):
         self.status = status
         self.content = content
@@ -75,7 +75,7 @@ class TestResponse(object):
         return self.headers.get(name)
 
 
-class TestClient(client.RestClient):
+class DummyClient(client.RestClient):
     
     testData = testData
 
@@ -88,7 +88,7 @@ class TestClient(client.RestClient):
 
         print method, url
 
-        self._response = TestResponse(**(self.testData.get(method).get(url)))
+        self._response = DummyResponse(**(self.testData.get(method).get(url)))
         return self._response
 
 
@@ -96,7 +96,7 @@ class TestClient(client.RestClient):
 
 def test_instantiate_default():
 
-    client = TestClient()
+    client = DummyClient()
     
     assert client.host == None
     assert client.port == None
@@ -122,12 +122,12 @@ def test_instantiate_arguments():
         "ssl" : False
     }
 
-    client = TestClient(**kwargs)
+    client = DummyClient(**kwargs)
     for k,v in kwargs.items():
         assert getattr(client, k) == v
 
 def test__url():
-    c = TestClient();
+    c = DummyClient();
     assert c._url("obj") == "/api/obj"
     assert c._url("obj", 123) == "/api/obj/123"
     assert c._url("obj", 123, limit=1) == "/api/obj/123?limit=1"
@@ -135,12 +135,12 @@ def test__url():
     assert c._url("obj", limit=1) == "/api/obj?limit=1"
 
 def test__throw():
-    response_404 = TestResponse(404, testData.get("_throw"))
-    response_401 = TestResponse(401, testData.get("_throw"))
-    response_400 = TestResponse(400, testData.get("_throw"))
-    response_500 = TestResponse(500, "{}")
+    response_404 = DummyResponse(404, testData.get("_throw"))
+    response_401 = DummyResponse(401, testData.get("_throw"))
+    response_400 = DummyResponse(400, testData.get("_throw"))
+    response_500 = DummyResponse(500, "{}")
 
-    c = TestClient();
+    c = DummyClient();
 
     with pytest.raises(client.NotFoundException) as exc:
         c._throw(response_404, response_404.data)
@@ -173,10 +173,10 @@ def test__throw():
 
 def test__load():
     
-    response_200 = TestResponse(200, testData.get("_load")) 
-    response_404 = TestResponse(404, testData.get("_throw"))
+    response_200 = DummyResponse(200, testData.get("_load")) 
+    response_404 = DummyResponse(404, testData.get("_throw"))
 
-    c = TestClient()
+    c = DummyClient()
 
     data = c._load(response_200)
     assert type(data) == list
@@ -196,7 +196,7 @@ def test__mangle_data():
 
     after = { "id" : 1 }
 
-    c = TestClient()
+    c = DummyClient()
 
     c._mangle_data(before)
     assert before == after
@@ -204,7 +204,7 @@ def test__mangle_data():
 
 def test_get():
     
-    c = TestClient()
+    c = DummyClient()
     data = c.get("obj", 1)
     assert data == c._response.data.get("data") 
 
@@ -213,14 +213,14 @@ def test_get():
 
 def test_all():
 
-    c = TestClient()
+    c = DummyClient()
     data = c.all("obj")
     assert len(data) == 10
     assert data == c._response.data.get("data")
     
 def test_create():
 
-    c = TestClient()
+    c = DummyClient()
 
     expected = json.loads(testData.get("GET").get("/api/obj/1").get("content"))
     data = c.create("obj_201", expected.get("data")[0])
@@ -236,7 +236,7 @@ def test_create():
 
 def test_update():
 
-    c = TestClient()
+    c = DummyClient()
 
     expected = json.loads(testData.get("PUT").get("/api/obj_200/1").get("content"))
 
