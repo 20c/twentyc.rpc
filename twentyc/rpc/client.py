@@ -3,8 +3,8 @@
 import base64
 import httplib
 import json
-import urllib
 import urlparse
+import requests
 
 
 class NotFoundException(LookupError):
@@ -21,90 +21,66 @@ class InvalidRequestException(ValueError):
 
 class RestClient(object):
 
-    def __init__(self, **kwargs):
+    def __init__(self, url, **kwargs):
         """
         RESTful client
-
-
         """
-        self.host = None
-        self.port = None
-        self.path = '/api/'
+        self.url = url
+        self._url = urlparse.urlparse(self.url)
         self.user = None
         self.password = None
         self.timeout = None
-        self.validate_ssl = True
         self.verbose = False
-        self.ssl = kwargs.get("ssl", True)
 
         # overwrite any param from keyword args
         for k in kwargs:
             if hasattr(self, k):
                 setattr(self, k, kwargs[k])
 
-    def _url(self, __typ, __id=None, **kwargs):
-        """
-        Build URL for connection
-        """
-        url = self.path + __typ
+    def url_update(self, **kwargs):
+        return urlparse.urlunparse(self._url._replace(**kwargs))
 
-        if __id:
-            url += '/' + str(__id)
-
-        if kwargs:
-            url += '?' + urllib.urlencode(kwargs)
-
-        return url
-
-    def _request(self, url, method='GET', data=None, cxn=None):
+    def _request(self, typ, id=0, method='GET', params=None, data=None, url=None):
         """
         send the request, return response obj
         """
-        if not cxn:
-            if self.ssl:
-              cxn = httplib.HTTPSConnection(self.host, self.port, strict=True, timeout=self.timeout)
-            else:
-              cxn = httplib.HTTPConnection(self.host, self.port, strict=True, timeout=self.timeout)
 
-        headers = {
-                  "Accept": "application/json"
-                  }
+        headers = { "Accept": "application/json" }
+        auth = None
 
         if self.user:
-            auth = 'Basic ' + base64.urlsafe_b64encode("%s:%s" % (self.user, self.password))
-            headers['Authorization'] = auth
+            auth = (self.user, self.password)
 
-        if data:
-            data = json.dumps(data)
-            headers["Content-length"] = len(data)
-            headers["Content-type"] = "application/json"
+        if not url:
+            if id:
+                url = "%s/%s/%s" % (self.url, typ, id)
+            else:
+                url = "%s/%s" % (self.url, typ)
 
-        self.log("%s %s headers:'%s' data:'%s' " % (method, url, str(headers), str(data)))
-        cxn.request(method, url, data, headers)
-        return cxn.getresponse()
+        return requests.request(method, url, params=params, data=data, auth=auth, headers=headers)
+
 
     def _throw(self, res, data):
         self.log('=====> %s' %  data)
         err = data.get('meta', {}).get('error', 'Unknown')
-        if res.status < 600:
-            if res.status == 404:
-                raise NotFoundException("%d %s" % (res.status, err))
-            elif res.status == 401 or res.status == 403:
-                raise PermissionDeniedException("%d %s" % (res.status, err))
-            elif res.status == 400:
-                raise InvalidRequestException("%d %s" % (res.status, err), data)
+        if res.status_code < 600:
+            if res.status_code == 404:
+                raise NotFoundException("%d %s" % (res.status_code, err))
+            elif res.status_code == 401 or res.status_code == 403:
+                raise PermissionDeniedException("%d %s" % (res.status_code, err))
+            elif res.status_code == 400:
+                raise InvalidRequestException("%d %s" % (res.status_code, err), data)
 
         # Internal
-        raise Exception("%d Internal error: %s" % (res.status, err))
+        raise Exception("%d Internal error: %s" % (res.status_code, err))
 
     def _load(self, res):
         try:
-            data = json.load(res)
-
+            data = res.json()
         except ValueError:
             data = {}
 
-        if res.status < 300:
+        if res.status_code < 300:
             if not data:
                 return []
             return data.get('data', [])
@@ -132,13 +108,13 @@ class RestClient(object):
             skip : number of records to skip
             limit : number of records to limit request to
         """
-        return self._load(self._request(self._url(typ, **kwargs)))
+        return self._load(self._request(typ, params=kwargs))
 
-    def get(self, typ, id):
+    def get(self, typ, id, **kwargs):
         """
         Load type by id
         """
-        return self._load(self._request(self._url(typ, id)))
+        return self._load(self._request(typ, id=id, params=kwargs))
 
     def create(self, typ, data, return_response=False):
         """
@@ -147,40 +123,34 @@ class RestClient(object):
             skip : number of records to skip
             limit : number of records to limit request to
         """
-        res = self._request(self._url(typ), 'POST', data)
-        if res.status != 201:
-            data = res.read()
+        res = self._request(typ, method='POST', data=data)
+        if res.status_code != 201:
             try:
-              self._throw(res, json.loads(data))
+              data = res.json()
+              self._throw(res, data)
             except ValueError:
               self._throw(res, {})
 
-        loc = res.getheader('Location')
+        loc = res.headers.get("location", None)
         if loc and loc.startswith('/'):
-            return self._load(self._request(loc))
+            return self._load(self._request(None, url=self.url_update(path=loc)))
         if return_response:
-          return res.read()
+            return res.json()
 
-        url = urlparse.urlparse(loc)
-        if self.ssl:
-          cxn = httplib.HTTPSConnection(url.netloc, strict=True, timeout=self.timeout, user=self.user, password=self.password)
-        else:
-          cxn = httplib.HTTPConnection(url.netloc, strict=True, timeout=self.timeout, user=self.user, password=self.password)
-# TODO check scheme, add args
-        return self._load(self._request(url.path, cxn=cxn))
+        return self._load(self._request(None, url=loc))
 
     def update(self, typ, id, **kwargs):
         """
         update just fields sent by keyword args
         """
-        return self._load(self._request(self._url(typ, id), 'PUT', kwargs))
+        return self._load(self._request(typ, id=id, method='PUT', data=kwargs))
 
     def save(self, typ, data):
         """
         Save the dataset pointed to by data (create or update)
         """
         if 'id' in data:
-            return self._load(self._request(self._url(typ, data['id']), 'PUT', data))
+            return self._load(self._request(typ, id=data['id'], method='PUT', data=data))
 
         return self.create(typ, data)
 
@@ -188,7 +158,7 @@ class RestClient(object):
         """
         remove typ by id
         """
-        return self._load(self._request(self._url(typ, id), 'DELETE'))
+        return self._load(self._request(typ, id=id, method='DELETE'))
 
 
 class TypeWrap(object):

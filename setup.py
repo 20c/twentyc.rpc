@@ -1,10 +1,11 @@
 from setuptools import setup
 
-version = open('config/VERSION').read().strip()
+version = open('facsimile/VERSION').read().strip()
+requirements = open('facsimile/requirements.txt').read().split("\n")
 
 setup(
     name='twentyc.rpc',
-    version=open('config/VERSION').read().rstrip(),
+    version=open('facsimile/VERSION').read().rstrip(),
     author='20C',
     author_email='code@20c.com',
     description='client for 20c\'s RESTful API',
@@ -21,6 +22,7 @@ setup(
     namespace_packages=['twentyc'],
     url='https://github.com/20c/twentyc.rpc',
     download_url='https://github.com/20c/twentyc.rpc/%s'%version,
+    install_requires=requirements,
     include_package_data=True,
     maintainer='20C',
     maintainer_email='code@20c.com',

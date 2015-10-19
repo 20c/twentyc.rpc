@@ -21,9 +21,9 @@ def obj(id, name=None):
 def objs(num):
     return [obj(i) for i in range(num)]
 
-def response(num, status=200, meta={}, headers={}):
+def response(num, status_code=200, meta={}, headers={}):
     return {
-        "status" : status,
+        "status_code" : status_code,
         "content" : json.dumps({
             "meta" : meta,
             "data" : objs(num)
@@ -44,23 +44,23 @@ testData = {
     "GET": {
         "/api/obj" : response(10),
         "/api/obj/1" : response(1),
-        "/api/obj/2" : response(0, status=404)
+        "/api/obj/2" : response(0, status_code=404)
     },
     "POST": {
-        "/api/obj_201" : response(0, status=201, headers={"Location":"/api/obj/1"}),
-        "/api/obj_401" : response(0, status=401),
-        "/api/obj_400" : response(0, status=400, meta=INVALID_DATA_ERROR)
+        "/api/obj_201" : response(0, status_code=201, headers={"location":"/api/obj/1"}),
+        "/api/obj_401" : response(0, status_code=401),
+        "/api/obj_400" : response(0, status_code=400, meta=INVALID_DATA_ERROR)
     },
     "PUT": {
         "/api/obj_200/1" : response(1),
-        "/api/obj_401/1" : response(0, status=401),
-        "/api/obj_400/1" : response(0, status=400, meta=INVALID_DATA_ERROR)
+        "/api/obj_401/1" : response(0, status_code=401),
+        "/api/obj_400/1" : response(0, status_code=400, meta=INVALID_DATA_ERROR)
     }
 }
 
 class DummyResponse(object):
-    def __init__(self, status, content, headers={}):
-        self.status = status
+    def __init__(self, status_code, content, headers={}):
+        self.status_code = status_code
         self.content = content
         self.headers = headers
 
@@ -74,19 +74,32 @@ class DummyResponse(object):
     def getheader(self, name):
         return self.headers.get(name)
 
+    def json(self):
+        return self.data
+
 
 class DummyClient(client.RestClient):
     
     testData = testData
 
-    def _request(self, url, method="GET", data=None, cxn=None):
+    def __init__(self, **kwargs):
+        super(DummyClient, self).__init__("http://localhost", **kwargs)
+
+    def _request(self, typ, id=0, method="GET", data=None, params=None, url=None):
         
         """
         Instead of requesting to a HTTP connection we retrieve pre-crafted
         responses from testData
         """
 
-        print method, url
+        print "URL", url, typ, id
+
+        if not url:
+            url = "/api/%s" % typ
+            if id:
+                url = "%s/%s" % (url, id)
+        else:
+            url = url.replace("http://localhost","")
 
         self._response = DummyResponse(**(self.testData.get(method).get(url)))
         return self._response
@@ -98,41 +111,28 @@ def test_instantiate_default():
 
     client = DummyClient()
     
-    assert client.host == None
-    assert client.port == None
-    assert client.path == "/api/"
+    assert client.url == "http://localhost"
     assert client.user == None
     assert client.password == None
     assert client.timeout == None
-    assert client.validate_ssl == True
     assert client.verbose == False
-    assert client.ssl == True
 
 def test_instantiate_arguments():
     
     kwargs = {
-        "host" : "localhost",
-        "port" : 1234,
-        "path" : "/other/",
         "user" : "user",
         "password" : "pass",
         "timeout" : 4000,
-        "validate_ssl" : False,
         "verbose" : True,
-        "ssl" : False
     }
 
     client = DummyClient(**kwargs)
     for k,v in kwargs.items():
         assert getattr(client, k) == v
 
-def test__url():
-    c = DummyClient();
-    assert c._url("obj") == "/api/obj"
-    assert c._url("obj", 123) == "/api/obj/123"
-    assert c._url("obj", 123, limit=1) == "/api/obj/123?limit=1"
-    assert c._url("obj", 123, limit=1, skip=2) == "/api/obj/123?skip=2&limit=1"
-    assert c._url("obj", limit=1) == "/api/obj?limit=1"
+def test_url_update():
+    client = DummyClient()
+    assert client.url_update(path="/apu") == "http://localhost/apu"
 
 def test__throw():
     response_404 = DummyResponse(404, testData.get("_throw"))
