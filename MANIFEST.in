@@ -1,2 +1,3 @@
 include facsimile/VERSION
 include facsimile/requirements.txt
+include README.md
