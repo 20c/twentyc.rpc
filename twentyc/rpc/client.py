@@ -160,6 +160,9 @@ class RestClient(object):
         """
         return self._load(self._request(typ, id=id, method='DELETE'))
 
+    def type_wrap(self, typ):
+        return TypeWrap(self, typ)
+
 
 class TypeWrap(object):
     def __init__(self, client, typ):
