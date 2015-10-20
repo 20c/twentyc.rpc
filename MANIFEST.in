@@ -1,2 +1,2 @@
 include facsimile/VERSION
-include facsimile/VERSION
+include facsimile/requirements.txt
