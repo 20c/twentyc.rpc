@@ -126,10 +126,13 @@ class RestClient(object):
         res = self._request(typ, method='POST', data=data)
         if res.status_code != 201:
             try:
-              data = res.json()
-              self._throw(res, data)
-            except ValueError:
-              self._throw(res, {})
+                data = res.json()
+                self._throw(res, data)
+            except ValueError, inst:
+                if type(inst) != InvalidRequestException:
+                    self._throw(res, {})
+                else:
+                    raise
 
         loc = res.headers.get("location", None)
         if loc and loc.startswith('/'):
