@@ -1,8 +1,5 @@
 #!/bin/env python
 
-import base64
-import httplib
-import json
 import urlparse
 import requests
 
@@ -16,7 +13,7 @@ class PermissionDeniedException(IOError):
 class InvalidRequestException(ValueError):
 
     def __init__(self, msg, extra):
-        Exception.__init__(self, msg)
+        super(InvalidRequestException, self).__init__(self, msg)
         self.extra = extra
 
 class RestClient(object):
@@ -128,8 +125,8 @@ class RestClient(object):
             try:
                 data = res.json()
                 self._throw(res, data)
-            except ValueError, inst:
-                if type(inst) != InvalidRequestException:
+            except ValueError as e:
+                if not isinstance(e, InvalidRequestException):
                     self._throw(res, {})
                 else:
                     raise
