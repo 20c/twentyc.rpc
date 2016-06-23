@@ -2,3 +2,4 @@ include LICENSE
 recursive-include facsimile *.txt
 recursive-include twentyc.rpc *.py
 include facsimile/VERSION
+include README.md
