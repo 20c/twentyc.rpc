@@ -2,6 +2,8 @@ from setuptools import setup
 
 version = open('facsimile/VERSION').read().strip()
 requirements = open('facsimile/requirements.txt').read().split("\n")
+test_requirements = open('facsimile/requirements-test.txt').read().split("\n")
+
 
 setup(
     name='twentyc.rpc',
@@ -23,6 +25,7 @@ setup(
     url='https://github.com/20c/twentyc.rpc',
     download_url='https://github.com/20c/twentyc.rpc/%s'%version,
     install_requires=requirements,
+    test_requires=test_requirements,
     include_package_data=True,
     maintainer='20C',
     maintainer_email='code@20c.com',
