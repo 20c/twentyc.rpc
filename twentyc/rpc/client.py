@@ -2,7 +2,8 @@
 
 from __future__ import print_function, unicode_literals
 
-import urlparse
+from six.moves.urllib import parse
+
 import requests
 
 
@@ -25,7 +26,7 @@ class RestClient(object):
         RESTful client
         """
         self.url = url
-        self._url = urlparse.urlparse(self.url)
+        self._url = parse.urlparse(self.url)
         self.user = None
         self.password = None
         self.timeout = None
@@ -37,7 +38,7 @@ class RestClient(object):
                 setattr(self, k, kwargs[k])
 
     def url_update(self, **kwargs):
-        return urlparse.urlunparse(self._url._replace(**kwargs))
+        return parse.urlunparse(self._url._replace(**kwargs))
 
     def _request(self, typ, id=0, method='GET', params=None, data=None, url=None):
         """
