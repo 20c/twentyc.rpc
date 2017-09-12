@@ -94,7 +94,7 @@ class DummyClient(client.RestClient):
         responses from testData
         """
 
-        print "URL", url, typ, id
+        print("URL", url, typ, id)
 
         if not url:
             url = "/api/%s" % typ

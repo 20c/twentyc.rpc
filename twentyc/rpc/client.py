@@ -98,7 +98,7 @@ class RestClient(object):
 
     def log(self, msg):
         if self.verbose:
-            print msg
+            print(msg)
 
     def all(self, typ, **kwargs):
         """
