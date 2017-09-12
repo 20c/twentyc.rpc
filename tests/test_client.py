@@ -2,6 +2,8 @@
 Unittests for twentyc.rpc.client
 """
 
+from __future__ import print_function, unicode_literals
+
 import pytest
 import json
 import uuid
@@ -33,7 +35,7 @@ def response(num, status_code=200, meta={}, headers={}):
 
 testData = {
     "_throw" : json.dumps({
-        "meta" : { 
+        "meta" : {
             "error" : "TEST_ERROR"
         }
     }),
@@ -79,14 +81,14 @@ class DummyResponse(object):
 
 
 class DummyClient(client.RestClient):
-    
+
     testData = testData
 
     def __init__(self, **kwargs):
         super(DummyClient, self).__init__("http://localhost", **kwargs)
 
     def _request(self, typ, id=0, method="GET", data=None, params=None, url=None):
-        
+
         """
         Instead of requesting to a HTTP connection we retrieve pre-crafted
         responses from testData
@@ -110,7 +112,7 @@ class DummyClient(client.RestClient):
 def test_instantiate_default():
 
     client = DummyClient()
-    
+
     assert client.url == "http://localhost"
     assert client.user == None
     assert client.password == None
@@ -118,7 +120,7 @@ def test_instantiate_default():
     assert client.verbose == False
 
 def test_instantiate_arguments():
-    
+
     kwargs = {
         "user" : "user",
         "password" : "pass",
@@ -172,8 +174,8 @@ def test__throw():
         assert exc.value.message == "500 Internal error: Unknown"
 
 def test__load():
-    
-    response_200 = DummyResponse(200, testData.get("_load")) 
+
+    response_200 = DummyResponse(200, testData.get("_load"))
     response_404 = DummyResponse(404, testData.get("_throw"))
 
     c = DummyClient()
@@ -200,13 +202,13 @@ def test__mangle_data():
 
     c._mangle_data(before)
     assert before == after
-    
+
 
 def test_get():
-    
+
     c = DummyClient()
     data = c.get("obj", 1)
-    assert data == c._response.data.get("data") 
+    assert data == c._response.data.get("data")
 
     with pytest.raises(client.NotFoundException) as exc:
         c.get("obj", 2)
@@ -217,7 +219,7 @@ def test_all():
     data = c.all("obj")
     assert len(data) == 10
     assert data == c._response.data.get("data")
-    
+
 def test_create():
 
     c = DummyClient()
@@ -228,10 +230,10 @@ def test_create():
 
     with pytest.raises(client.PermissionDeniedException) as exc:
         data = c.create("obj_401", expected.get("data")[0])
-    
+
     with pytest.raises(client.InvalidRequestException) as exc:
         data = c.create("obj_400", expected.get("data")[0])
-        assert exc.value.extra == INVALID_DATA_ERROR 
+        assert exc.value.extra == INVALID_DATA_ERROR
 
 
 def test_update():
@@ -242,5 +244,3 @@ def test_update():
 
     data = c.update("obj_200", 1, **expected.get("data")[0])
     assert data == expected.get("data")
-
-

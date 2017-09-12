@@ -1,5 +1,7 @@
 #!/bin/env python
 
+from __future__ import print_function, unicode_literals
+
 import urlparse
 import requests
 
@@ -192,4 +194,3 @@ class TypeWrap(object):
         remove by id
         """
         return self.client.rm(self.typ, id)
-

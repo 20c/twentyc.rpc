@@ -1,3 +1,5 @@
+from __future__ import print_function, unicode_literals
+
 from setuptools import setup
 
 version = open('facsimile/VERSION').read().strip()
