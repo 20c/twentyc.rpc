@@ -14,6 +14,9 @@
 ### Added
 - py3 compatibility
 
+### Changed
+- updated test requirements
+
 
 ## [0.3.5]
 ### Changed
