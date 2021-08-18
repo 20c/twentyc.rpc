@@ -2,7 +2,7 @@
 Unittests for twentyc.rpc.client
 """
 
-from __future__ import print_function, unicode_literals
+
 
 import pytest
 import json
@@ -129,7 +129,7 @@ def test_instantiate_arguments():
     }
 
     client = DummyClient(**kwargs)
-    for k,v in kwargs.items():
+    for k,v in list(kwargs.items()):
         assert getattr(client, k) == v
 
 def test_url_update():
