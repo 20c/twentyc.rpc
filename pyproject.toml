@@ -2,7 +2,7 @@
 name = "twentyc.rpc"
 repository = "https://github.com/20c/twentyc.rpc"
 readme = "README.md"
-version = "0.4.0.1"
+version = "1.0.0"
 description = "client for 20c's RESTful API"
 authors = [ "20C <code@20c.com>",]
 license = "LICENSE"
