@@ -2,65 +2,59 @@
 Unittests for twentyc.rpc.client
 """
 
-from __future__ import print_function, unicode_literals
 
-import pytest
 import json
 import uuid
+
+import pytest
 
 import twentyc.rpc.client as client
 
 ## PREP
 
-INVALID_DATA_ERROR = {"name" : "value required"}
+INVALID_DATA_ERROR = {"name": "value required"}
+
 
 def obj(id, name=None):
-    return {
-        "_id" : id,
-        "name" : (name or str(uuid.uuid4()))
-    }
+    return {"_id": id, "name": (name or str(uuid.uuid4()))}
+
 
 def objs(num):
     return [obj(i) for i in range(num)]
 
+
 def response(num, status_code=200, meta={}, headers={}):
     return {
-        "status_code" : status_code,
-        "content" : json.dumps({
-            "meta" : meta,
-            "data" : objs(num)
-        }),
-        "headers" : headers
+        "status_code": status_code,
+        "content": json.dumps({"meta": meta, "data": objs(num)}),
+        "headers": headers,
     }
+
 
 testData = {
-    "_throw" : json.dumps({
-        "meta" : {
-            "error" : "TEST_ERROR"
-        }
-    }),
-    "_load" : json.dumps({
-        "meta" : {},
-        "data" : objs(1)
-    }),
+    "_throw": json.dumps({"meta": {"error": "TEST_ERROR"}}),
+    "_load": json.dumps({"meta": {}, "data": objs(1)}),
     "GET": {
-        "/api/obj" : response(10),
-        "/api/obj/1" : response(1),
-        "/api/obj/2" : response(0, status_code=404)
+        "/api/obj": response(10),
+        "/api/obj/1": response(1),
+        "/api/obj/2": response(0, status_code=404),
     },
     "POST": {
-        "/api/obj_201" : response(0, status_code=201, headers={"location":"/api/obj/1"}),
-        "/api/obj_401" : response(0, status_code=401),
-        "/api/obj_400" : response(0, status_code=400, meta=INVALID_DATA_ERROR)
+        "/api/obj_201": response(
+            0, status_code=201, headers={"location": "/api/obj/1"}
+        ),
+        "/api/obj_401": response(0, status_code=401),
+        "/api/obj_400": response(0, status_code=400, meta=INVALID_DATA_ERROR),
     },
     "PUT": {
-        "/api/obj_200/1" : response(1),
-        "/api/obj_401/1" : response(0, status_code=401),
-        "/api/obj_400/1" : response(0, status_code=400, meta=INVALID_DATA_ERROR)
-    }
+        "/api/obj_200/1": response(1),
+        "/api/obj_401/1": response(0, status_code=401),
+        "/api/obj_400/1": response(0, status_code=400, meta=INVALID_DATA_ERROR),
+    },
 }
 
-class DummyResponse(object):
+
+class DummyResponse:
     def __init__(self, status_code, content, headers={}):
         self.status_code = status_code
         self.content = content
@@ -85,7 +79,7 @@ class DummyClient(client.RestClient):
     testData = testData
 
     def __init__(self, **kwargs):
-        super(DummyClient, self).__init__("http://localhost", **kwargs)
+        super().__init__("http://localhost", **kwargs)
 
     def _request(self, typ, id=0, method="GET", data=None, params=None, url=None):
 
@@ -99,15 +93,16 @@ class DummyClient(client.RestClient):
         if not url:
             url = "/api/%s" % typ
             if id:
-                url = "%s/%s" % (url, id)
+                url = f"{url}/{id}"
         else:
-            url = url.replace("http://localhost","")
+            url = url.replace("http://localhost", "")
 
         self._response = DummyResponse(**(self.testData.get(method).get(url)))
         return self._response
 
 
 ## TESTS
+
 
 def test_instantiate_default():
 
@@ -119,22 +114,25 @@ def test_instantiate_default():
     assert client.timeout == None
     assert client.verbose == False
 
+
 def test_instantiate_arguments():
 
     kwargs = {
-        "user" : "user",
-        "password" : "pass",
-        "timeout" : 4000,
-        "verbose" : True,
+        "user": "user",
+        "password": "pass",
+        "timeout": 4000,
+        "verbose": True,
     }
 
     client = DummyClient(**kwargs)
-    for k,v in kwargs.items():
+    for k, v in list(kwargs.items()):
         assert getattr(client, k) == v
+
 
 def test_url_update():
     client = DummyClient()
     assert client.url_update(path="/apu") == "http://localhost/apu"
+
 
 def test__throw():
     response_404 = DummyResponse(404, testData.get("_throw"))
@@ -142,7 +140,7 @@ def test__throw():
     response_400 = DummyResponse(400, testData.get("_throw"))
     response_500 = DummyResponse(500, "{}")
 
-    c = DummyClient();
+    c = DummyClient()
 
     with pytest.raises(client.NotFoundException) as exc:
         c._throw(response_404, response_404.data)
@@ -173,6 +171,7 @@ def test__throw():
 
         assert exc.value.message == "500 Internal error: Unknown"
 
+
 def test__load():
 
     response_200 = DummyResponse(200, testData.get("_load"))
@@ -188,15 +187,12 @@ def test__load():
     with pytest.raises(client.NotFoundException) as exc:
         c._load(response_404)
 
+
 def test__mangle_data():
 
-    before = {
-        "pk" : 1,
-        "_rev" : 123,
-        "_id" : 1
-    }
+    before = {"pk": 1, "_rev": 123, "_id": 1}
 
-    after = { "id" : 1 }
+    after = {"id": 1}
 
     c = DummyClient()
 
@@ -213,12 +209,14 @@ def test_get():
     with pytest.raises(client.NotFoundException) as exc:
         c.get("obj", 2)
 
+
 def test_all():
 
     c = DummyClient()
     data = c.all("obj")
     assert len(data) == 10
     assert data == c._response.data.get("data")
+
 
 def test_create():
 

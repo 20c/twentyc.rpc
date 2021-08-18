@@ -1,26 +1,25 @@
 #!/bin/env python
 
-from __future__ import print_function, unicode_literals
-
-from six.moves.urllib import parse
 
 import requests
+from urllib import parse
 
 
 class NotFoundException(LookupError):
     pass
 
+
 class PermissionDeniedException(IOError):
     pass
 
-class InvalidRequestException(ValueError):
 
+class InvalidRequestException(ValueError):
     def __init__(self, msg, extra):
-        super(InvalidRequestException, self).__init__(self, msg)
+        super().__init__(self, msg)
         self.extra = extra
 
-class RestClient(object):
 
+class RestClient:
     def __init__(self, url, **kwargs):
         """
         RESTful client
@@ -40,12 +39,12 @@ class RestClient(object):
     def url_update(self, **kwargs):
         return parse.urlunparse(self._url._replace(**kwargs))
 
-    def _request(self, typ, id=0, method='GET', params=None, data=None, url=None):
+    def _request(self, typ, id=0, method="GET", params=None, data=None, url=None):
         """
         send the request, return response obj
         """
 
-        headers = { "Accept": "application/json" }
+        headers = {"Accept": "application/json"}
         auth = None
 
         if self.user:
@@ -53,16 +52,17 @@ class RestClient(object):
 
         if not url:
             if id:
-                url = "%s/%s/%s" % (self.url, typ, id)
+                url = f"{self.url}/{typ}/{id}"
             else:
-                url = "%s/%s" % (self.url, typ)
+                url = f"{self.url}/{typ}"
 
-        return requests.request(method, url, params=params, data=data, auth=auth, headers=headers)
-
+        return requests.request(
+            method, url, params=params, data=data, auth=auth, headers=headers
+        )
 
     def _throw(self, res, data):
-        self.log('=====> %s' %  data)
-        err = data.get('meta', {}).get('error', 'Unknown')
+        self.log("=====> %s" % data)
+        err = data.get("meta", {}).get("error", "Unknown")
         if res.status_code < 600:
             if res.status_code == 404:
                 raise NotFoundException("%d %s" % (res.status_code, err))
@@ -83,19 +83,19 @@ class RestClient(object):
         if res.status_code < 300:
             if not data:
                 return []
-            return data.get('data', [])
+            return data.get("data", [])
 
         self._throw(res, data)
 
     def _mangle_data(self, data):
-        if not 'id' in data and 'pk' in data:
-            data['id'] = data['pk']
-        if '_rev' in data:
-            del data['_rev']
-        if 'pk' in data:
-            del data['pk']
-        if '_id' in data:
-            del data['_id']
+        if not "id" in data and "pk" in data:
+            data["id"] = data["pk"]
+        if "_rev" in data:
+            del data["_rev"]
+        if "pk" in data:
+            del data["pk"]
+        if "_id" in data:
+            del data["_id"]
 
     def log(self, msg):
         if self.verbose:
@@ -123,7 +123,7 @@ class RestClient(object):
             skip : number of records to skip
             limit : number of records to limit request to
         """
-        res = self._request(typ, method='POST', data=data)
+        res = self._request(typ, method="POST", data=data)
         if res.status_code != 201:
             try:
                 data = res.json()
@@ -135,7 +135,7 @@ class RestClient(object):
                     raise
 
         loc = res.headers.get("location", None)
-        if loc and loc.startswith('/'):
+        if loc and loc.startswith("/"):
             return self._load(self._request(None, url=self.url_update(path=loc)))
         if return_response:
             return res.json()
@@ -146,14 +146,16 @@ class RestClient(object):
         """
         update just fields sent by keyword args
         """
-        return self._load(self._request(typ, id=id, method='PUT', data=kwargs))
+        return self._load(self._request(typ, id=id, method="PUT", data=kwargs))
 
     def save(self, typ, data):
         """
         Save the dataset pointed to by data (create or update)
         """
-        if 'id' in data:
-            return self._load(self._request(typ, id=data['id'], method='PUT', data=data))
+        if "id" in data:
+            return self._load(
+                self._request(typ, id=data["id"], method="PUT", data=data)
+            )
 
         return self.create(typ, data)
 
@@ -161,13 +163,13 @@ class RestClient(object):
         """
         remove typ by id
         """
-        return self._load(self._request(typ, id=id, method='DELETE'))
+        return self._load(self._request(typ, id=id, method="DELETE"))
 
     def type_wrap(self, typ):
         return TypeWrap(self, typ)
 
 
-class TypeWrap(object):
+class TypeWrap:
     def __init__(self, client, typ):
         self.client = client
         self.typ = typ
