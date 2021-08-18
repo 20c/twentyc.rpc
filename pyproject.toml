@@ -23,9 +23,10 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = ">=3.6.1,<4.0"
 six = ">=1.10,<2.0"
 requests = ">=2.10.0"
+pre-commit = "^2.14.0"
 
 [tool.poetry.dev-dependencies]
 # test
