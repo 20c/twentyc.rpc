@@ -1,23 +1,24 @@
+# Changelog
 
-# twentyc.rpc change log
 
-## [Unreleased]
+## Unreleased
+
+
+## 1.0.0
 ### Added
-### Fixed
-### Changed
-### Deprecated
+- linting
+- moved to github workflows
 ### Removed
-### Security
+- python 2 support
 
 
-## [0.4.0]
+## 0.4.0
 ### Added
 - py3 compatibility
-
 ### Changed
 - updated test requirements
 
 
-## [0.3.5]
+## 0.3.5
 ### Changed
 - updated requirements

@@ -1,0 +1,21 @@
+Unreleased:
+  added: []
+  fixed: []
+  changed: []
+  deprecated: []
+  removed: []
+  security: []
+0.4.0:
+  added:
+  - py3 compatibility
+  changed:
+  - updated test requirements
+0.3.5:
+  changed:
+  - updated requirements
+1.0.0:
+  added:
+  - linting
+  - moved to github workflows
+  removed:
+  - python 2 support
