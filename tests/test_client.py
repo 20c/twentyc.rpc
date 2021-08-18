@@ -54,7 +54,7 @@ testData = {
 }
 
 
-class DummyResponse(object):
+class DummyResponse:
     def __init__(self, status_code, content, headers={}):
         self.status_code = status_code
         self.content = content
@@ -79,7 +79,7 @@ class DummyClient(client.RestClient):
     testData = testData
 
     def __init__(self, **kwargs):
-        super(DummyClient, self).__init__("http://localhost", **kwargs)
+        super().__init__("http://localhost", **kwargs)
 
     def _request(self, typ, id=0, method="GET", data=None, params=None, url=None):
 
@@ -93,7 +93,7 @@ class DummyClient(client.RestClient):
         if not url:
             url = "/api/%s" % typ
             if id:
-                url = "%s/%s" % (url, id)
+                url = f"{url}/{id}"
         else:
             url = url.replace("http://localhost", "")
 

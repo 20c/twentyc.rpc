@@ -2,7 +2,7 @@
 
 
 import requests
-from six.moves.urllib import parse
+from urllib import parse
 
 
 class NotFoundException(LookupError):
@@ -15,11 +15,11 @@ class PermissionDeniedException(IOError):
 
 class InvalidRequestException(ValueError):
     def __init__(self, msg, extra):
-        super(InvalidRequestException, self).__init__(self, msg)
+        super().__init__(self, msg)
         self.extra = extra
 
 
-class RestClient(object):
+class RestClient:
     def __init__(self, url, **kwargs):
         """
         RESTful client
@@ -52,9 +52,9 @@ class RestClient(object):
 
         if not url:
             if id:
-                url = "%s/%s/%s" % (self.url, typ, id)
+                url = f"{self.url}/{typ}/{id}"
             else:
-                url = "%s/%s" % (self.url, typ)
+                url = f"{self.url}/{typ}"
 
         return requests.request(
             method, url, params=params, data=data, auth=auth, headers=headers
@@ -169,7 +169,7 @@ class RestClient(object):
         return TypeWrap(self, typ)
 
 
-class TypeWrap(object):
+class TypeWrap:
     def __init__(self, client, typ):
         self.client = client
         self.typ = typ
